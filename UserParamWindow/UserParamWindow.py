@@ -11,7 +11,13 @@ cmd = {
     'cmd_resources': './resources',
     'cmd_id': 'cmdID_UserParamWindow',
     'workspace': 'FusionSolidEnvironment',
-    'toolbar_panel_id': 'SolidModifyPanel',
+    'toolbar_panel_ids': [
+        'SolidModifyPanel',
+    ],
+    'utilities_toolbar_panel': {
+        'panel_id': 'UserParamWindowPanel',
+        'panel_name': 'User Parameters',
+    },
     'palette_id': 'UserParamWindow_Palette_v8',
     'palette_name': 'User Parameters',
     'palette_html_file_url': 'palette.html',

@@ -245,6 +245,29 @@ function syncLayoutToViewport() {
     }
 }
 
+function kickInitialLayout(minH) {
+    // Force layout + ask host to size the palette/webview to a real height.
+    // This is the main fix for "blank until minimize".
+    syncLayoutToViewport();
+    var baseH = (typeof minH === 'number' && minH > 0) ? minH : 680;
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            if (!window.adsk) return;
+            var measured = Math.max(
+                document.documentElement.scrollHeight || 0,
+                document.body.scrollHeight || 0,
+                window.innerHeight || 0
+            );
+            // Never let the requested height be smaller than our designed size on initial opens.
+            var h = Math.max(measured, baseH, 680);
+            if (h > 0) {
+                requestPaletteSizeCommit(h);
+            }
+            onViewportChange();
+        });
+    });
+}
+
 function requestPaletteSizeCommit(viewportHeight) {
     if (!viewportHeight || !window.adsk) return;
     sendToFusion('commitPaletteSize', JSON.stringify({
@@ -278,6 +301,7 @@ function renderParams(payload) {
         tbody.innerHTML = '<tr><td colspan="5" class="empty">No user parameters. Add one below.</td></tr>';
         if (!payload.error) setStatus('No user parameters in this design.', '');
         syncLayoutToViewport();
+        kickInitialLayout();
         return;
     }
     params.forEach(function(p) {
@@ -295,6 +319,7 @@ function renderParams(payload) {
     });
     setStatus(params.length + ' parameter(s) loaded.', 'ok');
     syncLayoutToViewport();
+    kickInitialLayout();
 }
 
 function getExpressionChanges(changedOnly) {
@@ -407,6 +432,14 @@ window.addEventListener('resize', onViewportChange);
 document.addEventListener('DOMContentLoaded', function() {
     syncLayoutToViewport();
 
+    // Give the root a minimum height right away. Combined with the early
+    // kickInitialLayout + commit, this prevents the webview from staying at 0 height
+    // on first open until the user minimizes.
+    var appEl = document.getElementById('app');
+    if (appEl) {
+        appEl.style.minHeight = '480px';
+    }
+
     var paramRows = document.getElementById('param-rows');
     paramRows.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && e.target.matches('[data-field=expression]')) {
@@ -424,9 +457,22 @@ document.addEventListener('DOMContentLoaded', function() {
     var adskWaiter = setInterval(function() {
         if (window.adsk) {
             clearInterval(adskWaiter);
-            sendToFusion('paletteReady', '').then(function() {
-                syncLayoutToViewport();
-            });
+
+            // Force a full desired content height as early as possible.
+            // Using a fixed generous value (not current measurement) because
+            // on first open the webview container may still be tiny / not laid out.
+            // This goes through commit which now forces at least the designed palette height.
+            requestPaletteSizeCommit(680);
+
+            // Also kick via the measured path shortly after in case the first one races.
+            setTimeout(function() { kickInitialLayout(680); }, 30);
+
+            // Send ready shortly after so the bridge and layout have a chance to settle.
+            setTimeout(function() {
+                sendToFusion('paletteReady', '').then(function() {
+                    kickInitialLayout();
+                });
+            }, 80);
         }
     }, 100);
 

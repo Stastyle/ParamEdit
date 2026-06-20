@@ -13,9 +13,19 @@
 3. In **Scripts and Add-Ins**, stop and start the **UserParamWindow** add-in.
 4. Restart Fusion 360 (often clears webview/palette state for the session).
 
-**Status:** Under investigation. A full Fusion restart may resolve it; if it persists after restart, use Refresh until a code-side fix is added.
+**Status:** Fixed.
+
+The fix involved:
+- Creating the palette visible from the `add()` call.
+- Multiple explicit `palette.height = PALETTE_HEIGHT` forces from Python right after `isVisible`, after pushing content, and (with a small nudge) when the JS signals `'paletteReady'`.
+- `_commit_palette_content_height` now always targets at least the designed size when the client requests a layout commit.
+- JS side fires a large fixed-size `commitPaletteSize` request as soon as `window.adsk` is available (plus measured kicks after render).
+
+First open now shows the full palette immediately. No more minimize/restore dance required.
 
 ---
+
+
 
 ## Vertical resize can snap back slightly on mouse-up
 

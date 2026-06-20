@@ -40,7 +40,9 @@ See [tapnair installation guide](https://tapnair.github.io/installation.html) fo
 ## Usage (UserParamWindow)
 
 1. Open a design with user parameters (or add new ones in the palette).
-2. In the **Solid → Modify** panel, click **User Parameters**.
+2. Click **User Parameters** in either place:
+   - **Solid → Modify** tab
+   - **Utilities** tab (toolbar button on the main row)
 3. Edit expressions in the table; changes apply on **Enter** or when the field loses focus.
 4. Use the **+ Add** section at the bottom to create parameters.
 5. Use the refresh icon (top-right) if the list needs reloading.

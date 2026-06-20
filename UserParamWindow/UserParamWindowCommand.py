@@ -12,6 +12,45 @@ PALETTE_HTML = './palette.html'
 PALETTE_CHROME_HEIGHT = 36
 PALETTE_MIN_WIDTH = 300
 PALETTE_MIN_HEIGHT = 480
+UTILITIES_TAB_IDS = ('UtilitiesTab', 'ToolsTab')
+
+
+def _find_utilities_tab(workspace):
+    for tab_id in UTILITIES_TAB_IDS:
+        tab = workspace.toolbarTabs.itemById(tab_id)
+        if tab:
+            return tab
+
+    if workspace.toolbarTabs.count > 0:
+        return workspace.toolbarTabs.item(0)
+    return None
+
+
+def _ensure_utilities_toolbar_panel(ui, panel_id, panel_name):
+    panel = ui.allToolbarPanels.itemById(panel_id)
+    if panel:
+        return panel
+
+    workspace = ui.workspaces.itemById('FusionSolidEnvironment')
+    if not workspace:
+        return None
+
+    tab = _find_utilities_tab(workspace)
+    if not tab:
+        return None
+
+    return tab.toolbarPanels.add(panel_id, panel_name)
+
+
+def _add_command_to_controls(controls, cmd_def, cmd_id):
+    if controls.itemById(cmd_id):
+        return
+
+    control = controls.addCommand(cmd_def)
+    try:
+        control.isPromoted = True
+    except Exception:
+        pass
 
 
 def _get_app_context():
@@ -82,13 +121,15 @@ def _commit_palette_content_height(palette, content_height):
     if content_height <= 0:
         return
 
+    # Always push at least the designed size when the client requests a layout
+    # commit. This is critical on first open because the webview may have been
+    # given a tiny initial allocation; the JS kick tells us to expand.
     target_height = max(
         int(content_height) + PALETTE_CHROME_HEIGHT,
         PALETTE_MIN_HEIGHT,
-        palette.height,
+        PALETTE_HEIGHT,
     )
-    if target_height > palette.height:
-        palette.height = target_height
+    palette.height = target_height
 
 
 def _load_params_into_palette(palette):
@@ -226,6 +267,16 @@ class PaletteHTMLEventHandler(adsk.core.HTMLEventHandler):
                 if palette and palette.isValid:
                     _ensure_palette_minimum_size(palette)
                     _load_params_into_palette(palette)
+                    # Force the designed height once JS confirms the bridge is ready.
+                    # This is the most reliable moment to make the webview take full size.
+                    try:
+                        palette.height = PALETTE_HEIGHT
+                        # Small up-then-down nudge in case simple assign is ignored
+                        # by the window system on first open.
+                        palette.height = PALETTE_HEIGHT + 2
+                        palette.height = PALETTE_HEIGHT
+                    except Exception:
+                        pass
                 html_args.returnData = json.dumps({'ok': True})
                 return
 
@@ -314,7 +365,12 @@ class UserParamWindowCommand:
         self.cmd_resources = cmd_def['cmd_resources']
         self.cmd_id = cmd_def['cmd_id']
         self.workspace = cmd_def['workspace']
-        self.toolbar_panel_id = cmd_def['toolbar_panel_id']
+        self.toolbar_panel_ids = cmd_def.get('toolbar_panel_ids')
+        if not self.toolbar_panel_ids:
+            self.toolbar_panel_ids = [cmd_def['toolbar_panel_id']]
+        utilities_panel = cmd_def.get('utilities_toolbar_panel', {})
+        self.utilities_panel_id = utilities_panel.get('panel_id', '')
+        self.utilities_panel_name = utilities_panel.get('panel_name', self.cmd_name)
         self.palette_id = cmd_def['palette_id']
         self.palette_name = cmd_def['palette_name']
         self.palette_html = cmd_def['palette_html_file_url']
@@ -343,7 +399,7 @@ class UserParamWindowCommand:
                     self.palette_id,
                     self.palette_name,
                     PALETTE_HTML,
-                    False,
+                    True,   # create already visible so the webview gets the initial size
                     True,
                     True,
                     PALETTE_WIDTH,
@@ -373,38 +429,74 @@ class UserParamWindowCommand:
             palette.isVisible = True
             self._palette = palette
 
-            if not is_new_palette:
+            _ensure_palette_minimum_size(palette)
+
+            # For newly created palettes the initial webview allocation can be
+            # too small. Force the designed size right after showing and after
+            # we have pushed content. The JS side also requests a good size early.
+            if is_new_palette:
+                palette.width = PALETTE_WIDTH
+                palette.height = PALETTE_HEIGHT
+
+            # Send the initial content. For a fresh palette this may be slightly
+            # early, but the 'paletteReady' message from JS will cause another
+            # load + size force once the bridge is live.
+            try:
                 _load_params_into_palette(palette)
+            except Exception:
+                pass
+
+            # One more explicit set for new palettes after the content has been
+            # delivered to the webview.
+            if is_new_palette:
+                try:
+                    palette.height = PALETTE_HEIGHT
+                except Exception:
+                    pass
         except Exception:
             ui.messageBox('Failed to open palette:\n{}'.format(traceback.format_exc()))
+
+    def _ensure_command_definition(self, ui):
+        cmd_def = ui.commandDefinitions.itemById(self.cmd_id)
+        if cmd_def:
+            return cmd_def
+
+        cmd_def = ui.commandDefinitions.addButtonDefinition(
+            self.cmd_id,
+            self.cmd_name,
+            self.cmd_description,
+            self.cmd_resources,
+        )
+        on_created = ShowPaletteCreatedHandler(self)
+        cmd_def.commandCreated.add(on_created)
+        handlers.append(on_created)
+        return cmd_def
 
     def on_run(self):
         app = adsk.core.Application.get()
         ui = app.userInterface
 
         try:
-            from .Fusion360Utilities.Fusion360CommandBase import (
-                get_controls,
-                command_definition_by_id,
-            )
+            from .Fusion360Utilities.Fusion360CommandBase import get_controls
 
-            controls = get_controls(False, self.workspace, self.toolbar_panel_id, ui)
-            if controls.itemById(self.cmd_id):
-                return
+            cmd_def = self._ensure_command_definition(ui)
 
-            cmd_def = ui.commandDefinitions.itemById(self.cmd_id)
-            if not cmd_def:
-                cmd_def = ui.commandDefinitions.addButtonDefinition(
-                    self.cmd_id,
-                    self.cmd_name,
-                    self.cmd_description,
-                    self.cmd_resources,
+            for panel_id in self.toolbar_panel_ids:
+                controls = get_controls(False, self.workspace, panel_id, ui)
+                _add_command_to_controls(controls, cmd_def, self.cmd_id)
+
+            if self.utilities_panel_id:
+                utilities_panel = _ensure_utilities_toolbar_panel(
+                    ui,
+                    self.utilities_panel_id,
+                    self.utilities_panel_name,
                 )
-                on_created = ShowPaletteCreatedHandler(self)
-                cmd_def.commandCreated.add(on_created)
-                handlers.append(on_created)
-
-            controls.addCommand(cmd_def)
+                if utilities_panel:
+                    _add_command_to_controls(
+                        utilities_panel.controls,
+                        cmd_def,
+                        self.cmd_id,
+                    )
         except Exception:
             ui.messageBox('Add-in start failed:\n{}'.format(traceback.format_exc()))
 
@@ -423,10 +515,20 @@ class UserParamWindowCommand:
             if palette:
                 destroy_object(palette)
 
-            controls = get_controls(False, self.workspace, self.toolbar_panel_id, ui)
-            cmd_control = controls.itemById(self.cmd_id)
-            if cmd_control:
-                destroy_object(cmd_control)
+            for panel_id in self.toolbar_panel_ids:
+                controls = get_controls(False, self.workspace, panel_id, ui)
+                cmd_control = controls.itemById(self.cmd_id)
+                if cmd_control:
+                    destroy_object(cmd_control)
+
+            if self.utilities_panel_id:
+                utilities_panel = ui.allToolbarPanels.itemById(self.utilities_panel_id)
+                if utilities_panel:
+                    cmd_control = utilities_panel.controls.itemById(self.cmd_id)
+                    if cmd_control:
+                        destroy_object(cmd_control)
+                    if utilities_panel.controls.count == 0:
+                        destroy_object(utilities_panel)
 
             cmd_def = command_definition_by_id(self.cmd_id, ui)
             if cmd_def:
