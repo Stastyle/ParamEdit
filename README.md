@@ -1,8 +1,8 @@
-# UserParamWindow
+# UserParamWindow (ParamEdit fork)
 
-Fusion 360 add-in that shows **user parameters** in a **floating palette** inside Fusion. Forked from [tapnair/ParamEdit](https://github.com/tapnair/ParamEdit) and extended with palette UI, create/delete parameters, and auto-apply on edit.
+Fusion 360 add-in that shows **user parameters** in a **floating palette** inside Fusion. This repository is a fork of [tapnair/ParamEdit](https://github.com/tapnair/ParamEdit). The original modal **ParamEdit** add-in remains at the repo root; the new **UserParamWindow** palette add-in lives in the `UserParamWindow/` folder.
 
-## Features
+## UserParamWindow features
 
 - Floating, resizable palette (not a modal dialog)
 - View and edit user parameter expressions
@@ -17,18 +17,18 @@ Fusion 360 add-in that shows **user parameters** in a **floating palette** insid
 - Autodesk Fusion 360 (Windows or Mac)
 - An open **parametric design** (Model workspace)
 
-## Installation
+## Installation (UserParamWindow)
 
 ### Option A — project folder (development)
 
-1. Clone or copy this repository.
+1. Clone this repository.
 2. In Fusion: **Utilities → Scripts and Add-Ins → Add-Ins** (green **+**).
-3. Add the `UserParamWindow` folder from this repo (the folder that contains `UserParamWindow.py` and `UserParamWindow.manifest`).
+3. Add the `UserParamWindow` folder (contains `UserParamWindow.py` and `UserParamWindow.manifest`).
 4. Select **UserParamWindow**, click **Run**.
 
 ### Option B — Fusion Add-Ins directory
 
-Copy the `UserParamWindow` folder to your Fusion add-ins location, then run it from **Scripts and Add-Ins**:
+Copy the `UserParamWindow` folder to your Fusion add-ins location:
 
 | OS | Path |
 |----|------|
@@ -37,7 +37,7 @@ Copy the `UserParamWindow` folder to your Fusion add-ins location, then run it f
 
 See [tapnair installation guide](https://tapnair.github.io/installation.html) for details.
 
-## Usage
+## Usage (UserParamWindow)
 
 1. Open a design with user parameters (or add new ones in the palette).
 2. In the **Solid → Modify** panel, click **User Parameters**.
@@ -48,18 +48,31 @@ See [tapnair installation guide](https://tapnair.github.io/installation.html) fo
 ## Project layout
 
 ```
-UserParamWindow/
-├── UserParamWindow.py           # Add-in entry (run/stop)
+UserParamWindow/                 # New floating-palette add-in
+├── UserParamWindow.py
 ├── UserParamWindow.manifest
-├── UserParamWindowCommand.py    # Palette + parameter CRUD
-├── palette.html                 # Floating UI
-├── Fusion360Utilities/          # Shared utilities (from ParamEdit fork)
-└── resources/                   # Toolbar icons
+├── UserParamWindowCommand.py
+├── palette.html
+├── Fusion360Utilities/
+└── resources/
+
+ParamEdit.py                     # Original upstream modal add-in (unchanged)
+ParamEditCommand.py
+...
 ```
 
 ## Known issues
 
 See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
+---
+
+## Original ParamEdit (upstream)
+
+The root-level **ParamEdit** add-in is Patrick Rainsberry's original script for editing user parameters in a modal dialog with live preview.
+
+- Install/run **ParamEdit** from the repo root files, or use the upstream [ParamEdit release](https://github.com/tapnair/ParamEdit).
+- Usage: **Modify → paramEdit**
 
 ## Credits
 
@@ -68,4 +81,4 @@ See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 ## License
 
-Same lineage as ParamEdit; refer to upstream repository for license terms.
+Samples are licensed under the terms of the [MIT License](http://opensource.org/licenses/MIT). See upstream [LICENSE](LICENSE) where applicable.
