@@ -36,16 +36,17 @@ button {
 button.primary { background: #0696d7; color: #fff; border-color: #0580b8; }
 button.danger {
     color: #b00020;
-    border-color: #b00020;
+    border: 1px solid #b00020;
     background: transparent;
     padding: 2px;
-    min-width: 20px;
-    min-height: 20px;
+    min-width: 24px;
+    min-height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    border-radius: 3px;
 }
-button.danger:hover { background: #ffebee; }
+button.danger:hover { background: #ffebee; border-color: #900; }
 .status { margin: 4px 0; padding: 4px 6px; border-radius: 3px; background: #e8f4fc; flex: 0 0 auto; }
 .status.ok { background: #e6f4ea; color: #1e6b3a; }
 .status.err { background: #fdecea; color: #b00020; }
@@ -100,8 +101,8 @@ button.icon-btn svg {
 .col-name { width: 24%; }
 .col-expr { width: 22%; }
 .col-unit { width: 10%; }
-.col-comment { width: 35%; }
-.col-action { width: 9%; text-align: center; }
+.col-comment { width: 32%; }
+.col-action { width: 12%; text-align: center; min-width: 32px; }
 .cell-text {
     display: block;
     overflow: hidden;
@@ -197,7 +198,7 @@ input[type=text], select {
                     <th>Expression</th>
                     <th>Unit</th>
                     <th>Comment</th>
-                    <th></th>
+                    <th style="width:12%;"></th>
                 </tr>
             </thead>
             <tbody id="param-rows">
@@ -318,14 +319,12 @@ function renderParams(payload) {
     params.forEach(function(p) {
         var row = document.createElement('tr');
         row.dataset.name = p.name;
-        var del = p.isDeletable
-            ? '<button class="danger" onclick="deleteParameter(\'' + escapeAttr(p.name) + '\')" title="Delete ' + escapeAttr(p.name) + '">'
-              + '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
+        var del = '<button class="danger" onclick="deleteParameter(\'' + escapeAttr(p.name) + '\')" title="Delete ' + escapeAttr(p.name) + '">'
+              + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#b00020" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
               + '<line x1="18" y1="6" x2="6" y2="18"></line>'
               + '<line x1="6" y1="6" x2="18" y2="18"></line>'
               + '</svg>'
-              + '</button>'
-            : '';
+              + '</button>';
         row.innerHTML = '<td><span class="cell-text" title="' + escapeAttr(p.name) + '">' + escapeHtml(p.name) + '</span></td>'
             + '<td><input type="text" data-field="expression" data-original-expression="' + escapeAttr(p.expression) + '" value="' + escapeAttr(p.expression) + '" title="' + escapeAttr(p.expression) + '"></td>'
             + '<td><span class="cell-text" title="' + escapeAttr(p.unit || '') + '">' + escapeHtml(p.unit || '') + '</span></td>'

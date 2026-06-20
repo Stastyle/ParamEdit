@@ -1,56 +1,70 @@
-# UserParamWindow (ParamEdit fork)
+# User Parameters Floating Palette — Fusion 360 Add-in
 
-Fusion 360 add-in that shows **user parameters** in a **floating palette** inside Fusion. This repository is a fork of [tapnair/ParamEdit](https://github.com/tapnair/ParamEdit). The original modal **ParamEdit** add-in remains at the repo root; the new **UserParamWindow** palette add-in lives in the `UserParamWindow/` folder.
+A floating, always-accessible palette for viewing, editing, creating, and deleting **user parameters** in Autodesk Fusion 360.
 
-## UserParamWindow features
+**This is a fork** of the original [ParamEdit](https://github.com/tapnair/ParamEdit) by Patrick Rainsberry (tapnair).
 
-- Floating, resizable palette (not a modal dialog)
-- View and edit user parameter expressions
-- Auto-apply when you press **Enter** or click outside an expression field
-- Create new user parameters (name, value, unit, comment)
-- Delete deletable parameters
-- Manual **Apply** for batch edits
-- Refresh button (icon, top-right) to reload from the design
+I created this version because I wanted a few missing functions (inline create/delete + a persistent floating window) so I could stay inside the add-in the whole time instead of constantly going back and forth between the model and the standard User Parameters menu/popup.
+
+## Features
+
+- Floating/resizable palette (dock it or leave it floating)
+- View + edit user parameter expressions directly
+- Auto-apply on Enter or when you click out of a field
+- Create new parameters (name, expression/value, unit, comment)
+- Delete parameters with a red X (with confirmation)
+- Batch Apply button
+- Refresh button
+- Works with text and numeric parameters
 
 ## Requirements
 
-- Autodesk Fusion 360 (Windows or Mac)
-- An open **parametric design** (Model workspace)
+- Autodesk Fusion 360
+- An open **parametric design** (you must be in the Model / Design workspace)
 
-## Installation (UserParamWindow)
+## Installation in Fusion 360
 
-### Option A — project folder (development)
+### Recommended: Add Existing Add-in (no copy needed)
 
-1. Clone this repository.
-2. In Fusion: **Utilities → Scripts and Add-Ins → Add-Ins** (green **+**).
-3. Add the `UserParamWindow` folder (contains `UserParamWindow.py` and `UserParamWindow.manifest`).
-4. Select **UserParamWindow**, click **Run**.
+1. Download or `git clone` this repository.
+2. In Fusion 360 go to the **Utilities** tab (or **Tools** menu) → **Scripts and Add-Ins**.
+3. Switch to the **Add-Ins** tab.
+4. Click the green **+** button ("Add existing script or add-in").
+5. Browse to the `UserParamWindow` folder and select it.
+6. In the list, select **UserParamWindow** and click **Run**.
+7. (Optional but recommended) Check **Run on Startup** so it loads automatically.
 
-### Option B — Fusion Add-Ins directory
+### Manual installation (copy to AddIns folder)
 
-Copy the `UserParamWindow` folder to your Fusion add-ins location:
+Copy the entire `UserParamWindow` folder to your Fusion Add-Ins directory:
 
-| OS | Path |
-|----|------|
-| Windows | `%appdata%\Autodesk\Autodesk Fusion 360\API\AddIns` |
-| Mac | `~/Library/Application Support/Autodesk/Autodesk Fusion 360/API/AddIns` |
+| Platform | Destination |
+|----------|-------------|
+| Windows  | `%APPDATA%\Autodesk\Autodesk Fusion 360\API\AddIns\UserParamWindow` |
+| macOS    | `~/Library/Application Support/Autodesk/Autodesk Fusion 360/API/AddIns/UserParamWindow` |
 
-See [tapnair installation guide](https://tapnair.github.io/installation.html) for details.
+Then restart Fusion 360 and enable it from **Scripts and Add-Ins**.
 
-## Usage (UserParamWindow)
+After installation the command appears under:
+- **Solid → Modify** panel
+- Utilities / main toolbar (depending on your workspace)
 
-1. Open a design with user parameters (or add new ones in the palette).
-2. Click **User Parameters** in either place:
-   - **Solid → Modify** tab
-   - **Utilities** tab (toolbar button on the main row)
-3. Edit expressions in the table; changes apply on **Enter** or when the field loses focus.
-4. Use the **+ Add** section at the bottom to create parameters.
-5. Use the refresh icon (top-right) if the list needs reloading.
+## Usage
 
-## Project layout
+1. Open a parametric design.
+2. Click **User Parameters** button.
+3. The palette opens as a floating window.
+4. Edit expressions — they apply automatically on Enter or blur.
+5. Use the **+ Add** area at the bottom to create new parameters.
+6. Click the red **X** at the end of a row to delete (with confirmation).
+7. Use the refresh icon (top right) if the list gets out of sync.
+
+The palette remembers its position and size between uses.
+
+## Project Structure
 
 ```
-UserParamWindow/                 # New floating-palette add-in
+UserParamWindow/                 # The actual add-in you install
 ├── UserParamWindow.py
 ├── UserParamWindow.manifest
 ├── UserParamWindowCommand.py
@@ -58,29 +72,23 @@ UserParamWindow/                 # New floating-palette add-in
 ├── Fusion360Utilities/
 └── resources/
 
-ParamEdit.py                     # Original upstream modal add-in (unchanged)
-ParamEditCommand.py
-...
+README.md
+KNOWN_ISSUES.md
+.gitignore
 ```
 
-## Known issues
+(The original modal ParamEdit files have been removed to keep the repo focused on the floating palette version.)
+
+## Known Issues
 
 See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
----
+## Credits & Fork Info
 
-## Original ParamEdit (upstream)
-
-The root-level **ParamEdit** add-in is Patrick Rainsberry's original script for editing user parameters in a modal dialog with live preview.
-
-- Install/run **ParamEdit** from the repo root files, or use the upstream [ParamEdit release](https://github.com/tapnair/ParamEdit).
-- Usage: **Modify → paramEdit**
-
-## Credits
-
-- Based on [ParamEdit](https://github.com/tapnair/ParamEdit) by Patrick Rainsberry (tapnair)
-- Palette pattern inspired by [Fusion360AddinSkeleton](https://github.com/tapnair/Fusion360AddinSkeleton)
+- Forked from [ParamEdit](https://github.com/tapnair/ParamEdit) by Patrick Rainsberry
+- Palette UI pattern inspired by [Fusion360AddinSkeleton](https://github.com/tapnair/Fusion360AddinSkeleton)
+- This fork adds the floating palette + create/delete functionality so you don't have to leave the window to manage parameters.
 
 ## License
 
-Samples are licensed under the terms of the [MIT License](http://opensource.org/licenses/MIT). See upstream [LICENSE](LICENSE) where applicable.
+Licensed under the MIT License (same as upstream). See upstream repository for full license text.

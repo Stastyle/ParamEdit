@@ -2,4 +2,6 @@ __pycache__/
 *.pyc
 .idea/
 .vscode/
-mcps/
+*.log
+.DS_Store
+Thumbs.db
