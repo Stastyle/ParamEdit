@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+html, body {
+    margin: 0;
+    padding: 6px;
+    font-family: Segoe UI, Tahoma, sans-serif;
+    font-size: 12px;
+    color: #222;
+    background: #f5f5f5;
+    box-sizing: border-box;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+*, *::before, *::after { box-sizing: border-box; }
+#app {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+button {
+    font-size: 12px;
+    padding: 4px 10px;
+    margin-right: 6px;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    background: #fff;
+    cursor: pointer;
+}
+button.primary { background: #0696d7; color: #fff; border-color: #0580b8; }
+button.danger { color: #b00020; min-width: 24px; padding: 2px 6px; }
+.status { margin: 4px 0; padding: 4px 6px; border-radius: 3px; background: #e8f4fc; flex: 0 0 auto; }
+.status.ok { background: #e6f4ea; color: #1e6b3a; }
+.status.err { background: #fdecea; color: #b00020; }
+#toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.toolbar-spacer { flex: 1 1 auto; }
+button.icon-btn {
+    padding: 4px 6px;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 26px;
+}
+button.icon-btn svg {
+    display: block;
+}
+#table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid #ccc;
+    background: #fff;
+    margin-bottom: 6px;
+    width: 100%;
+}
+#params-table {
+    width: 100%;
+    min-width: 280px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+#params-table th,
+#params-table td {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 4px 6px;
+    text-align: left;
+    vertical-align: middle;
+    overflow: hidden;
+}
+#params-table th {
+    background: #fafafa;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.col-name { width: 24%; }
+.col-expr { width: 22%; }
+.col-unit { width: 10%; }
+.col-comment { width: 36%; }
+.col-action { width: 8%; }
+.cell-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+input[type=text], select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 12px;
+    padding: 3px 5px;
+    border: 1px solid #ccc;
+}
+#add-panel {
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 8px;
+    width: 100%;
+    overflow: visible;
+}
+#add-panel h2 {
+    font-size: 11px;
+    margin: 0 0 6px 0;
+    font-weight: 600;
+}
+.add-row-1,
+.add-row-2 {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.add-row-1 { grid-template-columns: 1fr 1fr; }
+.add-row-2 {
+    grid-template-columns: minmax(90px, 1fr) minmax(0, 2.5fr);
+    align-items: end;
+}
+.add-comment-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    min-width: 0;
+}
+.add-field {
+    min-width: 0;
+}
+.add-field label {
+    display: block;
+    font-size: 10px;
+    color: #555;
+    margin-bottom: 2px;
+}
+.add-comment-field {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.add-inline-btn {
+    flex: 0 0 auto;
+    font-size: 11px;
+    padding: 4px 12px;
+    white-space: nowrap;
+    margin: 0;
+}
+.empty { padding: 16px; text-align: center; color: #777; }
+</style>
+</head>
+<body>
+<div id="app">
+    <div id="toolbar">
+        <button class="primary" onclick="applyChanges()">Apply</button>
+        <span class="toolbar-spacer"></span>
+        <button class="icon-btn" onclick="refreshParams()" title="Refresh" aria-label="Refresh">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                <path fill="currentColor" d="M13.65 2.35A7.96 7.96 0 0 0 8 0a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 8 2c1.66 0 3.14.67 4.22 1.76L9 7h7V0l-2.35 2.35z"/>
+            </svg>
+        </button>
+    </div>
+    <div id="status" class="status">Loading…</div>
+    <div id="table-wrap">
+        <table id="params-table">
+            <colgroup>
+                <col class="col-name">
+                <col class="col-expr">
+                <col class="col-unit">
+                <col class="col-comment">
+                <col class="col-action">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Expression</th>
+                    <th>Unit</th>
+                    <th>Comment</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="param-rows">
+                <tr><td colspan="5" class="empty">No parameters yet.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div id="add-panel">
+        <h2>Add Parameter</h2>
+        <div class="add-row-1">
+            <div class="add-field">
+                <label for="new-name">Name</label>
+                <input type="text" id="new-name">
+            </div>
+            <div class="add-field">
+                <label for="new-expression">Value</label>
+                <input type="text" id="new-expression" placeholder="10 mm">
+            </div>
+        </div>
+        <div class="add-row-2">
+            <div class="add-field">
+                <label for="new-unit">Unit</label>
+                <select id="new-unit">
+                    <option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option>
+                    <option value="in">in</option><option value="ft">ft</option><option value="deg">deg</option>
+                    <option value="rad">rad</option>
+                    <option value="">(unitless)</option>
+                    <option value="Text">Text</option>
+                </select>
+            </div>
+            <div class="add-comment-row">
+                <div class="add-field add-comment-field">
+                    <label for="new-comment">Comment</label>
+                    <input type="text" id="new-comment">
+                </div>
+                <button class="primary add-inline-btn" onclick="addParameter()">+ Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+var peakViewportHeight = 0;
+var resizeSettleTimer = null;
+var applyingExpressionInput = null;
+
+function syncLayoutToViewport() {
+    // Let flex layout fill the live viewport; never force fixed pixel heights.
+    document.documentElement.style.width = '';
+    document.documentElement.style.height = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    var app = document.getElementById('app');
+    if (app) {
+        app.style.width = '';
+        app.style.height = '';
+    }
+}
+
+function requestPaletteSizeCommit(viewportHeight) {
+    if (!viewportHeight || !window.adsk) return;
+    sendToFusion('commitPaletteSize', JSON.stringify({
+        contentHeight: viewportHeight
+    }));
+}
+
+function setStatus(msg, type) {
+    var el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status ' + (type || '');
+}
+
+function sendToFusion(action, data) {
+    return adsk.fusionSendData(action, data || '').then(function(result) {
+        try { return JSON.parse(result); } catch (e) { return { ok: false, error: result }; }
+    });
+}
+
+function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function escapeAttr(t) {
+    return String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;');
+}
+
+function renderParams(payload) {
+    var tbody = document.getElementById('param-rows');
+    tbody.innerHTML = '';
+    if (payload.error) setStatus(payload.error, '');
+    var params = payload.params || [];
+    if (!params.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No user parameters. Add one below.</td></tr>';
+        if (!payload.error) setStatus('No user parameters in this design.', '');
+        syncLayoutToViewport();
+        return;
+    }
+    params.forEach(function(p) {
+        var row = document.createElement('tr');
+        row.dataset.name = p.name;
+        var del = p.isDeletable
+            ? '<button class="danger" onclick="deleteParameter(\'' + escapeAttr(p.name) + '\')">×</button>'
+            : '';
+        row.innerHTML = '<td><span class="cell-text" title="' + escapeAttr(p.name) + '">' + escapeHtml(p.name) + '</span></td>'
+            + '<td><input type="text" data-field="expression" data-original-expression="' + escapeAttr(p.expression) + '" value="' + escapeAttr(p.expression) + '" title="' + escapeAttr(p.expression) + '"></td>'
+            + '<td><span class="cell-text" title="' + escapeAttr(p.unit || '') + '">' + escapeHtml(p.unit || '') + '</span></td>'
+            + '<td><span class="cell-text" title="' + escapeAttr(p.comment || '') + '">' + escapeHtml(p.comment || '') + '</span></td>'
+            + '<td>' + del + '</td>';
+        tbody.appendChild(row);
+    });
+    setStatus(params.length + ' parameter(s) loaded.', 'ok');
+    syncLayoutToViewport();
+}
+
+function getExpressionChanges(changedOnly) {
+    var changes = [];
+    document.querySelectorAll('#param-rows tr[data-name]').forEach(function(row) {
+        var input = row.querySelector('[data-field=expression]');
+        if (!input) return;
+        if (changedOnly && input.value === input.dataset.originalExpression) return;
+        changes.push({ name: row.dataset.name, expression: input.value });
+    });
+    return changes;
+}
+
+function applyChanges() {
+    var changes = getExpressionChanges(true);
+    if (!changes.length) { setStatus('Nothing to apply.', ''); return; }
+    setStatus('Applying…', '');
+    sendToFusion('applyParams', JSON.stringify(changes)).then(function(r) {
+        if (r.ok) setStatus('Applied ' + (r.applied || []).length + ' parameter(s).', 'ok');
+        else setStatus('Error: ' + (r.errors || [r.error]).join('; '), 'err');
+    });
+}
+
+function applyExpressionInput(input) {
+    if (!input || applyingExpressionInput === input) return;
+    var row = input.closest('tr[data-name]');
+    if (!row) return;
+
+    var name = row.dataset.name;
+    var expression = input.value;
+    if (expression === input.dataset.originalExpression) return;
+
+    applyingExpressionInput = input;
+    setStatus('Applying…', '');
+    sendToFusion('applyParams', JSON.stringify([{ name: name, expression: expression }])).then(function(r) {
+        applyingExpressionInput = null;
+        if (r.ok) {
+            input.dataset.originalExpression = expression;
+            setStatus('Applied "' + name + '".', 'ok');
+        } else {
+            setStatus('Error: ' + (r.errors || [r.error]).join('; '), 'err');
+        }
+    });
+}
+
+function refreshParams() {
+    setStatus('Refreshing…', '');
+    sendToFusion('refreshParams', '').then(function() { setStatus('Refreshed.', 'ok'); });
+}
+
+function addParameter() {
+    var data = {
+        name: document.getElementById('new-name').value.trim(),
+        expression: document.getElementById('new-expression').value.trim(),
+        unit: document.getElementById('new-unit').value,
+        comment: document.getElementById('new-comment').value.trim()
+    };
+    if (!data.name) { setStatus('Enter a parameter name.', 'err'); return; }
+    sendToFusion('addParam', JSON.stringify(data)).then(function(r) {
+        if (r.ok) {
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-expression').value = '';
+            document.getElementById('new-comment').value = '';
+            setStatus('Created "' + data.name + '".', 'ok');
+        } else setStatus(r.error || 'Failed.', 'err');
+    });
+}
+
+function deleteParameter(name) {
+    if (!confirm('Delete "' + name + '"?')) return;
+    sendToFusion('deleteParam', JSON.stringify({ name: name })).then(function(r) {
+        setStatus(r.ok ? 'Deleted.' : (r.error || 'Failed.'), r.ok ? 'ok' : 'err');
+    });
+}
+
+window.fusionJavaScriptHandler = {
+    handle: function(action, data) {
+        try {
+            if (action === 'loadParams') {
+                renderParams(JSON.parse(data));
+            }
+        } catch (e) {
+            setStatus('UI error: ' + e.message, 'err');
+            return 'FAILED';
+        }
+        return 'OK';
+    }
+};
+
+function onViewportChange() {
+    var viewH = window.innerHeight || 0;
+    if (viewH > peakViewportHeight) {
+        peakViewportHeight = viewH;
+    }
+    syncLayoutToViewport();
+
+    clearTimeout(resizeSettleTimer);
+    resizeSettleTimer = setTimeout(function() {
+        var settledH = window.innerHeight || 0;
+        // Only fix vertical snap-back; never touch width.
+        if (peakViewportHeight > settledH + 8) {
+            requestPaletteSizeCommit(peakViewportHeight);
+        }
+        peakViewportHeight = settledH;
+    }, 150);
+}
+
+window.addEventListener('resize', onViewportChange);
+
+document.addEventListener('DOMContentLoaded', function() {
+    syncLayoutToViewport();
+
+    var paramRows = document.getElementById('param-rows');
+    paramRows.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.matches('[data-field=expression]')) {
+            e.preventDefault();
+            applyExpressionInput(e.target);
+            e.target.blur();
+        }
+    });
+    paramRows.addEventListener('focusout', function(e) {
+        if (e.target.matches('[data-field=expression]')) {
+            applyExpressionInput(e.target);
+        }
+    });
+
+    var adskWaiter = setInterval(function() {
+        if (window.adsk) {
+            clearInterval(adskWaiter);
+            sendToFusion('paletteReady', '').then(function() {
+                syncLayoutToViewport();
+            });
+        }
+    }, 100);
+
+    if (window.ResizeObserver) {
+        new ResizeObserver(onViewportChange).observe(document.documentElement);
+    }
+});
+</script>
+</body>
+</html>

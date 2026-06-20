@@ -1,0 +1,12 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"id":	"a7f3c2e1-9b4d-4a6f-8e2c-1d5f9a3b7c40",
+	"author":	"UserParamWindow",
+	"description":	{
+		"":	"Floating palette to view, create, edit, and delete user parameters"
+	},
+	"version":	"1.0",
+	"runOnStartup":	false,
+	"supportedOS":	"windows|mac"
+}
