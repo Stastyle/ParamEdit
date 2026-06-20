@@ -34,7 +34,18 @@ button {
     cursor: pointer;
 }
 button.primary { background: #0696d7; color: #fff; border-color: #0580b8; }
-button.danger { color: #b00020; min-width: 24px; padding: 2px 6px; }
+button.danger {
+    color: #b00020;
+    border-color: #b00020;
+    background: transparent;
+    padding: 2px;
+    min-width: 20px;
+    min-height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+button.danger:hover { background: #ffebee; }
 .status { margin: 4px 0; padding: 4px 6px; border-radius: 3px; background: #e8f4fc; flex: 0 0 auto; }
 .status.ok { background: #e6f4ea; color: #1e6b3a; }
 .status.err { background: #fdecea; color: #b00020; }
@@ -89,8 +100,8 @@ button.icon-btn svg {
 .col-name { width: 24%; }
 .col-expr { width: 22%; }
 .col-unit { width: 10%; }
-.col-comment { width: 36%; }
-.col-action { width: 8%; }
+.col-comment { width: 35%; }
+.col-action { width: 9%; text-align: center; }
 .cell-text {
     display: block;
     overflow: hidden;
@@ -308,7 +319,12 @@ function renderParams(payload) {
         var row = document.createElement('tr');
         row.dataset.name = p.name;
         var del = p.isDeletable
-            ? '<button class="danger" onclick="deleteParameter(\'' + escapeAttr(p.name) + '\')">×</button>'
+            ? '<button class="danger" onclick="deleteParameter(\'' + escapeAttr(p.name) + '\')" title="Delete ' + escapeAttr(p.name) + '">'
+              + '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
+              + '<line x1="18" y1="6" x2="6" y2="18"></line>'
+              + '<line x1="6" y1="6" x2="18" y2="18"></line>'
+              + '</svg>'
+              + '</button>'
             : '';
         row.innerHTML = '<td><span class="cell-text" title="' + escapeAttr(p.name) + '">' + escapeHtml(p.name) + '</span></td>'
             + '<td><input type="text" data-field="expression" data-original-expression="' + escapeAttr(p.expression) + '" value="' + escapeAttr(p.expression) + '" title="' + escapeAttr(p.expression) + '"></td>'
